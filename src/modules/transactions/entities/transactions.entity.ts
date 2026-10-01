@@ -9,7 +9,7 @@ import { Booking } from '../../bookings/entities/booking.entity';
 @Index('IDX_transactions_status_created_at', ['status', 'createdAt'])
 @Check(
   'CHK_transactions_amounts',
-  '"subtotal" >= 0 AND "total_amount" >= 0 AND "gateway_fee" >= 0',
+  `"gateway_fee" >= 0 AND (("subtotal" >= 0 AND "total_amount" >= 0 AND "parent_transaction_id" IS NULL) OR ("transaction_type" = 'refund' AND "parent_transaction_id" IS NOT NULL AND "subtotal" < 0 AND "total_amount" < 0))`,
 )
 export class Transaction extends CustomBaseEntity {
   @Column({
@@ -41,6 +41,17 @@ export class Transaction extends CustomBaseEntity {
   })
   @JoinColumn({ name: 'booking_id' })
   booking: Relation<Booking> | null;
+
+  @Index('IDX_transactions_parent_transaction_id', { unique: true })
+  @Column({ name: 'parent_transaction_id', type: 'uuid', nullable: true })
+  parentTransactionId: string | null;
+
+  @ManyToOne(() => Transaction, { nullable: true, onDelete: 'RESTRICT' })
+  @JoinColumn({
+    name: 'parent_transaction_id',
+    foreignKeyConstraintName: 'FK_transactions_parent',
+  })
+  parentTransaction: Relation<Transaction> | null;
 
   @Column({
     name: 'transaction_type',

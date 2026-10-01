@@ -23,6 +23,7 @@ async function bootstrap() {
     credentials: true,
   });
   app.use(helmet());
+  app.setGlobalPrefix('/api');
 
   // Setup Swagger API Documentation
   setupSwagger(app);

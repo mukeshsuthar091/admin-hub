@@ -10,7 +10,7 @@ import { AllExceptionsFilter, AuthGuard, ResponseInterceptor } from './common';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { Role } from './modules/roles/entities/role.entity';
 import { User } from './modules/users/entities/user.entity';
-import { AppToken } from './modules/auth/entities/appToken.entity';
+import { AuthModule } from './modules/auth/auth.module';
 import { Booking } from './modules/bookings/entities/booking.entity';
 import { Transaction } from './modules/transactions/entities/transactions.entity';
 
@@ -35,7 +35,8 @@ import { Transaction } from './modules/transactions/entities/transactions.entity
       useFactory: (configService: ConfigService) =>
         configService.get('database')!,
     }),
-    TypeOrmModule.forFeature([Role, User, AppToken, Booking, Transaction]),
+    TypeOrmModule.forFeature([Role, User, Booking, Transaction]),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
-  IsIn,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -9,6 +9,11 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+
+import {
+  BookingStatusFilter,
+  BookingWhenFilter,
+} from '../type/booking-query.enum';
 
 export class ListBookingsQueryDto {
   @ApiPropertyOptional({ default: 1 })
@@ -35,19 +40,22 @@ export class ListBookingsQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
-    enum: ['all', 'confirmed', 'completed', 'pending', 'cancelled'],
+    enum: BookingStatusFilter,
   })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
-  @IsIn(['all', 'confirmed', 'completed', 'pending', 'cancelled'])
-  status?: string;
+  @IsEnum(BookingStatusFilter)
+  status?: BookingStatusFilter;
 
-  @ApiPropertyOptional({ enum: ['all', 'upcoming', 'past'], default: 'all' })
+  @ApiPropertyOptional({
+    enum: BookingWhenFilter,
+    default: BookingWhenFilter.ALL,
+  })
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
-  @IsIn(['all', 'upcoming', 'past'])
-  when: 'all' | 'upcoming' | 'past' = 'all';
+  @IsEnum(BookingWhenFilter)
+  when: BookingWhenFilter = BookingWhenFilter.ALL;
 }

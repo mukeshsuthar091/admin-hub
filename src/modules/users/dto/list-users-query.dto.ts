@@ -1,6 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import {
-  IsIn,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -9,6 +9,13 @@ import {
   Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+import {
+  UserRoleFilter,
+  UserStatusFilter,
+  UserSortBy,
+  UserSortOrder,
+} from '../type/user-query.enum';
 
 export class ListUsersQueryDto {
   @ApiPropertyOptional({ default: 1, minimum: 1 })
@@ -35,39 +42,39 @@ export class ListUsersQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
-    enum: ['ALL', 'ADMIN', 'VIEWER', 'EDITOR', 'SUPER_ADMIN'],
+    enum: UserRoleFilter,
   })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toUpperCase() : value,
   )
-  @IsIn(['ALL', 'ADMIN', 'VIEWER', 'EDITOR', 'SUPER_ADMIN'])
-  role?: string;
+  @IsEnum(UserRoleFilter)
+  role?: UserRoleFilter;
 
-  @ApiPropertyOptional({ enum: ['all', 'active', 'inactive', 'suspended'] })
+  @ApiPropertyOptional({ enum: UserStatusFilter })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
-  @IsIn(['all', 'active', 'inactive', 'suspended'])
-  status?: string;
+  @IsEnum(UserStatusFilter)
+  status?: UserStatusFilter;
 
   @ApiPropertyOptional({
-    enum: ['createdAt', 'name'],
-    default: 'createdAt',
+    enum: UserSortBy,
+    default: UserSortBy.DATE_JOINED,
     description: 'createdAt corresponds to Date Joined',
   })
-  @IsIn(['createdAt', 'name'])
-  sortBy: 'createdAt' | 'name' = 'createdAt';
+  @IsEnum(UserSortBy)
+  sortBy: UserSortBy = UserSortBy.DATE_JOINED;
 
   @ApiPropertyOptional({
-    enum: ['ASC', 'DESC'],
+    enum: UserSortOrder,
     description: 'Defaults to DESC for Date Joined, ASC for Name',
   })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.toUpperCase() : value,
   )
-  @IsIn(['ASC', 'DESC'])
-  sortOrder?: 'ASC' | 'DESC';
+  @IsEnum(UserSortOrder)
+  sortOrder?: UserSortOrder;
 }

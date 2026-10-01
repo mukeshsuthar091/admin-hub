@@ -9,6 +9,11 @@ import { Booking } from '../entities/booking.entity';
 import { User } from '../../users/entities/user.entity';
 import { generateCode } from '../../../helpers/code.helper';
 
+import {
+  BookingStatusFilter,
+  BookingWhenFilter,
+} from '../type/booking-query.enum';
+
 @Injectable()
 export class BookingsRepository {
   constructor(
@@ -125,12 +130,12 @@ export class BookingsRepository {
       const search = `%${filters.search.replace(/[\\%_]/g, '\\$&')}%`;
       query.andWhere('booking.serviceName ILIKE :search', { search });
     }
-    if (filters.status && filters.status !== 'all') {
+    if (filters.status && filters.status !== BookingStatusFilter.ALL) {
       query.andWhere('booking.status = :status', { status: filters.status });
     }
-    if (filters.when === 'upcoming')
+    if (filters.when === BookingWhenFilter.UPCOMING)
       query.andWhere('booking.scheduleAt >= CURRENT_TIMESTAMP');
-    if (filters.when === 'past')
+    if (filters.when === BookingWhenFilter.PAST)
       query.andWhere('booking.scheduleAt < CURRENT_TIMESTAMP');
 
     return query

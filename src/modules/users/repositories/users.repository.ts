@@ -16,6 +16,13 @@ interface UserStatsRow {
   newThisMonth: string;
 }
 
+import {
+  UserRoleFilter,
+  UserStatusFilter,
+  UserSortBy,
+  UserSortOrder,
+} from '../type/user-query.enum';
+
 @Injectable()
 export class UsersRepository {
   constructor(
@@ -173,18 +180,21 @@ export class UsersRepository {
       );
     }
 
-    if (filters.role && filters.role !== 'ALL') {
+    if (filters.role && filters.role !== UserRoleFilter.ALL) {
       query.andWhere('role.name = :role', { role: filters.role });
     }
 
-    if (filters.status && filters.status !== 'all') {
+    if (filters.status && filters.status !== UserStatusFilter.ALL) {
       query.andWhere('user.status = :status', { status: filters.status });
     }
 
     const sortColumn =
-      filters.sortBy === 'name' ? 'user.name' : 'user.createdAt';
+      filters.sortBy === UserSortBy.NAME ? 'user.name' : 'user.createdAt';
     const sortOrder =
-      filters.sortOrder ?? (filters.sortBy === 'name' ? 'ASC' : 'DESC');
+      filters.sortOrder ??
+      (filters.sortBy === UserSortBy.NAME
+        ? UserSortOrder.ASC
+        : UserSortOrder.DESC);
 
     return query
       .orderBy(sortColumn, sortOrder)

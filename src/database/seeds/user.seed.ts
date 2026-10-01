@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { hash } from 'bcrypt';
+import { hashPassword } from '../../helpers/password.helper';
 import { Role } from '../../modules/roles/entities/role.entity';
 import { User } from '../../modules/users/entities/user.entity';
 import { UserStatus } from '../../common/enums';
@@ -25,10 +25,7 @@ export async function seedSuperAdmin(dataSource: DataSource): Promise<void> {
     throw new Error('SUPER_ADMIN role not found. Run role seed first.');
   }
 
-  const password = await hash(
-    'Admin@123',
-    Number(process.env.SALT_ROUNDS || 10),
-  );
+  const password = await hashPassword('Admin@123');
   const userCode = await generateCode(dataSource, 'user_code_seq', 'USR');
   const user = userRepository.create({
     name: 'Super Admin',
@@ -94,10 +91,7 @@ export async function seedUsers(dataSource: DataSource): Promise<void> {
     UserStatus.SUSPENDED,
     UserStatus.INACTIVE,
   ];
-  const password = await hash(
-    'User@123',
-    Number(process.env.SALT_ROUNDS || 10),
-  );
+  const password = await hashPassword('User@123');
 
   for (let i = 1; i <= 74; i++) {
     const email = `seed.user${String(i).padStart(3, '0')}@adminhub.com`;

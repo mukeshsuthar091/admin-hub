@@ -21,9 +21,27 @@ const revenueAmount = `CASE
   WHEN transaction_type = 'refund' AND status IN ('completed', 'refunded') THEN -ABS(total_amount)
   ELSE 0 END`;
 
+import { SystemAlert } from '../entities/system-alert.entity';
+
 @Injectable()
 export class DashboardRepository {
   constructor(private readonly dataSource: DataSource) {}
+
+  findAlerts(offset: number, limit: number): Promise<[SystemAlert[], number]> {
+    return this.dataSource.getRepository(SystemAlert).findAndCount({
+      select: {
+        id: true,
+        severity: true,
+        title: true,
+        description: true,
+        isRead: true,
+        createdAt: true,
+      },
+      order: { createdAt: 'DESC', id: 'DESC' },
+      skip: offset,
+      take: limit,
+    });
+  }
 
   getStats(timezone: string): Promise<DashboardMetricRow[]> {
     return this.dataSource.query<DashboardMetricRow[]>(

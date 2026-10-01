@@ -6,9 +6,36 @@ import {
 } from './dto/dashboard-response.dto';
 import { DashboardInterval, DashboardRange } from './type/dashboard.enum';
 
+import { PaginatedData } from '../../common/types';
+import {
+  calculatePagination,
+  generatePaginationMeta,
+} from '../../helpers/pagination.helper';
+import { ListAlertsQueryDto } from './dto/list-alerts-query.dto';
+import { SystemAlertDto } from './dto/system-alert.dto';
+
 @Injectable()
 export class DashboardService {
-  constructor(private readonly repository: DashboardRepository) { }
+  constructor(private readonly repository: DashboardRepository) {}
+
+  async getAlerts(
+    query: ListAlertsQueryDto,
+  ): Promise<PaginatedData<SystemAlertDto>> {
+    const { page, limit, offset } = calculatePagination(
+      query.page,
+      query.limit,
+    );
+    const [alerts, total] = await this.repository.findAlerts(offset, limit);
+    const data = alerts.map((alert): SystemAlertDto => ({
+      id: alert.id,
+      severity: alert.severity.toUpperCase(),
+      title: alert.title,
+      description: alert.description,
+      isRead: alert.isRead,
+      createdAt: alert.createdAt,
+    }));
+    return { data, meta: generatePaginationMeta(page, limit, total) };
+  }
 
   async getStats(): Promise<DashboardStatsDto> {
     const rows = await this.repository.getStats(
@@ -35,8 +62,8 @@ export class DashboardService {
                 ? 100
                 : -100
             : Number(
-              (((current - previous) / Math.abs(previous)) * 100).toFixed(1),
-            ),
+                (((current - previous) / Math.abs(previous)) * 100).toFixed(1),
+              ),
       };
     }
     return result;

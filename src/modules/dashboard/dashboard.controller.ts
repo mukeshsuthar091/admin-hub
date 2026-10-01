@@ -17,6 +17,13 @@ import {
   DashboardStatsResponseDto,
 } from './dto/dashboard-response.dto';
 
+import { PaginatedData } from '../../common/types';
+import { ListAlertsQueryDto } from './dto/list-alerts-query.dto';
+import {
+  SystemAlertDto,
+  SystemAlertsResponseDto,
+} from './dto/system-alert.dto';
+
 @ApiTags('Dashboard')
 @ApiBearerAuth('JWT-auth')
 @ApiUnauthorizedResponse({
@@ -26,6 +33,16 @@ import {
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
+
+  @Get('alerts')
+  @ApiOperation({ summary: 'Paginated system alerts, newest first' })
+  @ApiOkResponse({ type: SystemAlertsResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid pagination values' })
+  getAlerts(
+    @Query() query: ListAlertsQueryDto,
+  ): Promise<PaginatedData<SystemAlertDto>> {
+    return this.dashboardService.getAlerts(query);
+  }
 
   @Get('stats')
   @ApiOperation({

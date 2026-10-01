@@ -29,7 +29,25 @@ export class BookingCustomerDto {
   totalBookingsCompleted: number;
 }
 
+export class BookingLifecycleLogDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+  @ApiProperty()
+  eventType: string;
+  @ApiProperty()
+  title: string;
+  @ApiProperty({ type: String, nullable: true })
+  description: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+}
+
 export class BookingDetailsDto {
+  @ApiProperty({
+    type: [BookingLifecycleLogDto],
+    description: 'Latest booking lifecycle logs',
+  })
+  lifecycleLogs: BookingLifecycleLogDto[];
   @ApiProperty()
   id: string;
   @ApiProperty()

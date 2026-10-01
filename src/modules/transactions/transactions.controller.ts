@@ -95,7 +95,7 @@ export class TransactionsController {
   @Get(':id')
   @ApiOperation({
     summary:
-      'Transaction details, customer and two recent related transactions',
+      'Transaction details, customer, two recent transactions and processing history entries',
   })
   @ApiOkResponse({ type: TransactionDetailsResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid transaction UUID' })

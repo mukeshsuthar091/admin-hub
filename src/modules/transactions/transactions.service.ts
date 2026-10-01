@@ -41,7 +41,7 @@ export class TransactionsService {
     return this.dataSource.transaction(async (manager) => {
       const original = await this.repository.findForRefund(manager, id);
       if (!original) throw new NotFoundException('Transaction not found');
-      
+
       if (
         original.status === TransactionStatus.REFUNDED ||
         (await this.repository.hasRefund(manager, id))
@@ -50,7 +50,7 @@ export class TransactionsService {
           'Transaction has already been fully refunded',
         );
       }
-      
+
       if (
         original.transactionType !== TransactionType.PAYMENT ||
         original.status !== TransactionStatus.COMPLETED ||
@@ -110,10 +110,10 @@ export class TransactionsService {
   async getTransactionById(id: string): Promise<TransactionDetailsDto> {
     const item = await this.repository.findById(id);
     if (!item) throw new NotFoundException('Transaction not found');
-    const recent = await this.repository.findRelatedTransactions(
-      item.userId,
-      id,
-    );
+    const [recent, processingHistory] = await Promise.all([
+      this.repository.findRelatedTransactions(item.userId, id),
+      this.repository.findProcessingHistory(id),
+    ]);
     return {
       id: item.id,
       transactionCode: item.transactionCode,
@@ -141,6 +141,13 @@ export class TransactionsService {
         email: item.user.email,
         avatarUrl: item.user.avatarUrl,
       },
+      processingHistory: processingHistory.map((log) => ({
+        id: log.id,
+        status: log.status,
+        title: log.title,
+        description: log.description,
+        createdAt: log.createdAt,
+      })),
       recentTransactions: recent.map((transaction) => ({
         id: transaction.id,
         transactionCode: transaction.transactionCode,

@@ -15,6 +15,8 @@ import {
   TransactionAmountFilter,
 } from '../type/transaction-query.enum';
 
+import { TransactionProcessingLog } from '../entities/transaction-processing-log.entity';
+
 @Injectable()
 export class TransactionsRepository {
   constructor(
@@ -180,6 +182,25 @@ export class TransactionsRepository {
       .skip(offset)
       .take(limit)
       .getManyAndCount();
+  }
+
+  findProcessingHistory(
+    transactionId: string,
+  ): Promise<TransactionProcessingLog[]> {
+    return this.transactionRepository.manager
+      .getRepository(TransactionProcessingLog)
+      .find({
+        where: { transactionId },
+        select: {
+          id: true,
+          status: true,
+          title: true,
+          description: true,
+          createdAt: true,
+        },
+        order: { createdAt: 'DESC', id: 'DESC' },
+        take: 5,
+      });
   }
 
   findById(id: string): Promise<Transaction | null> {

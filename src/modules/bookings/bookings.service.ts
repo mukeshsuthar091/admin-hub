@@ -73,7 +73,7 @@ export class BookingsService {
     await this.dataSource.transaction(async (manager) => {
       const booking = await this.repository.findForUpdate(manager, id);
       if (!booking) throw new NotFoundException('Booking not found');
-      
+
       if (
         [BookingStatus.COMPLETED, BookingStatus.CANCELLED].includes(
           booking.status,
@@ -94,9 +94,10 @@ export class BookingsService {
     const booking = await this.repository.findById(id);
     if (!booking) throw new NotFoundException('Booking not found');
 
-    const [payment, totalBookingsCompleted] = await Promise.all([
+    const [payment, totalBookingsCompleted, lifecycleLogs] = await Promise.all([
       this.transactionsService.findBookingPayment(id),
       this.repository.countCompletedBookings(booking.userId),
+      this.repository.findLifecycleLogs(id),
     ]);
 
     return {
@@ -108,6 +109,13 @@ export class BookingsService {
       durationMinutes: booking.durationMinutes,
       location: booking.location,
       specialNotes: booking.specialNotes,
+      lifecycleLogs: lifecycleLogs.map((log) => ({
+        id: log.id,
+        eventType: log.eventType,
+        title: log.title,
+        description: log.description,
+        createdAt: log.createdAt,
+      })),
       payment: payment
         ? {
             billingAmount: payment.totalAmount,

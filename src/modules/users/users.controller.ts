@@ -116,7 +116,8 @@ export class UsersController {
   @Get(':id')
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOperation({
-    summary: 'User profile and two latest bookings and transactions',
+    summary:
+      'User profile, two latest bookings and transactions, and latest activity logs',
   })
   @ApiOkResponse({ type: UserDetailResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid user UUID' })

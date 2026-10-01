@@ -30,7 +30,25 @@ export class RecentBookingDto {
   scheduleAt: Date;
 }
 
+export class RecentActivityLogDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+  @ApiProperty()
+  action: string;
+  @ApiProperty()
+  title: string;
+  @ApiProperty({ type: String, nullable: true })
+  description: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+}
+
 export class UserDetailDto extends UserProfileDto {
+  @ApiProperty({
+    type: [RecentActivityLogDto],
+    description: 'Latest user activity logs',
+  })
+  recentActivityLogs: RecentActivityLogDto[];
   @ApiProperty({ type: [RecentTransactionDto] })
   transactions: RecentTransactionDto[];
   @ApiProperty({ type: [RecentBookingDto] })

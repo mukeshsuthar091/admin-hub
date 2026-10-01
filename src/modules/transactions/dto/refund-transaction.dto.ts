@@ -6,6 +6,7 @@ export class RefundRecordDto extends OmitType(TransactionDetailsDto, [
   'serviceName',
   'user',
   'recentTransactions',
+  'processingHistory',
 ] as const) {
   @ApiProperty()
   isDelete: boolean;

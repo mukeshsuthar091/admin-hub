@@ -14,6 +14,8 @@ import {
   BookingWhenFilter,
 } from '../type/booking-query.enum';
 
+import { BookingLifecycleLog } from '../entities/booking-lifecycle-log.entity';
+
 @Injectable()
 export class BookingsRepository {
   constructor(
@@ -70,6 +72,23 @@ export class BookingsRepository {
     await manager
       .getRepository(Booking)
       .update({ id, isDelete: false }, changes);
+  }
+
+  findLifecycleLogs(bookingId: string): Promise<BookingLifecycleLog[]> {
+    return this.bookingRepository.manager
+      .getRepository(BookingLifecycleLog)
+      .find({
+        where: { bookingId },
+        select: {
+          id: true,
+          eventType: true,
+          title: true,
+          description: true,
+          createdAt: true,
+        },
+        order: { createdAt: 'DESC', id: 'DESC' },
+        take: 5,
+      });
   }
 
   findById(id: string): Promise<Booking | null> {

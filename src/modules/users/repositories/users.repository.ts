@@ -23,6 +23,8 @@ import {
   UserSortOrder,
 } from '../type/user-query.enum';
 
+import { UserActivityLog } from '../entities/user-activity-log.entity';
+
 @Injectable()
 export class UsersRepository {
   constructor(
@@ -97,6 +99,21 @@ export class UsersRepository {
     return this.userRepository.findOne({
       where: { id, isDelete: false },
       select: { id: true },
+    });
+  }
+
+  findRecentActivityLogs(userId: string): Promise<UserActivityLog[]> {
+    return this.dataSource.getRepository(UserActivityLog).find({
+      where: { userId },
+      select: {
+        id: true,
+        action: true,
+        title: true,
+        description: true,
+        createdAt: true,
+      },
+      order: { createdAt: 'DESC', id: 'DESC' },
+      take: 5,
     });
   }
 

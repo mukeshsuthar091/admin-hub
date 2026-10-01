@@ -37,10 +37,10 @@ export class UsersService {
     if (await this.usersRepository.findByEmail(dto.email)) {
       throw new ConflictException('User with this email already exists');
     }
-    
+
     const role = await this.rolesService.findByName(dto.role);
     if (!role) throw new NotFoundException('Role not found or deleted');
-    
+
     const password = await hashPassword('User@123');
     try {
       const user = await this.usersRepository.createUser({
@@ -75,7 +75,7 @@ export class UsersService {
     const role = dto.role ? await this.rolesService.findByName(dto.role) : null;
     if (dto.role && !role)
       throw new NotFoundException('Role not found or deleted');
-    
+
     const updated = await this.usersRepository.bulkUpdate(
       dto.user_ids,
       role?.id,
@@ -92,9 +92,10 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    const [transactions, booking] = await Promise.all([
+    const [transactions, booking, activityLogs] = await Promise.all([
       this.transactionsService.findRecentTransactions(id),
       this.bookingsService.findRecentBookings(id),
+      this.usersRepository.findRecentActivityLogs(id),
     ]);
 
     return {
@@ -115,6 +116,13 @@ export class UsersService {
       lastActiveAt: user.lastActiveAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      recentActivityLogs: activityLogs.map((log) => ({
+        id: log.id,
+        action: log.action,
+        title: log.title,
+        description: log.description,
+        createdAt: log.createdAt,
+      })),
       transactions: transactions.map((item) => ({
         id: item.id,
         transactionCode: item.transactionCode,

@@ -123,7 +123,8 @@ export class BookingsController {
   @Get(':id')
   @ResponseMessage('Booking details fetched successfully')
   @ApiOperation({
-    summary: 'Fetch booking details, payment and customer by ID',
+    summary:
+      'Fetch booking details, payment, customer and latest lifecycle logs',
   })
   @ApiOkResponse({ type: BookingDetailsResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid booking UUID' })

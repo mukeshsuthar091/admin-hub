@@ -75,7 +75,25 @@ export class RelatedTransactionDto {
   proceedAt: Date | null;
 }
 
+export class ProcessingHistoryDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+  @ApiProperty()
+  status: string;
+  @ApiProperty()
+  title: string;
+  @ApiProperty({ type: String, nullable: true })
+  description: string | null;
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+}
+
 export class TransactionDetailsDto {
+  @ApiProperty({
+    type: [ProcessingHistoryDto],
+    description: 'Latest processing history entries',
+  })
+  processingHistory: ProcessingHistoryDto[];
   @ApiProperty()
   id: string;
   @ApiProperty()

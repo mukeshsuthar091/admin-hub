@@ -63,8 +63,9 @@ npm run migration:run
 ```
 
 The generate command needs a database connection to compare the schema.
-There are no entities or schema migrations yet, so generation is useful once
-feature entities have been added.
+The initial migration creates roles, users, app tokens, bookings and transactions,
+including their enum types, indexes, constraints and code sequences. Run it with
+`npm run migration:run`. Generate a new migration for later entity changes.
 
 To undo the last applied migration:
 
@@ -80,8 +81,22 @@ node node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js
 npm run start:prod
 ```
 
-A seed script, realistic sample data, admin credentials and a schema diagram
-will be added with the feature modules.
+## Seed initial roles and admin
+
+After applying migrations, run:
+
+```bash
+npm run seed
+```
+
+The seed creates `SUPER_ADMIN`, `ADMIN`, `VIEWER` and `EDITOR` roles first,
+then creates one super admin: `admin@adminhub.com` / `Admin@123`.
+The password is hashed with bcrypt using `SALT_ROUNDS` before saving.
+Existing roles are checked by name, and an existing admin email is skipped
+without changing its password or role. Role and user codes use the existing
+PostgreSQL sequence helper. You can rerun the command after a partial failure.
+
+Realistic dashboard data and a schema diagram are still to be added.
 
 ## Shared setup
 
@@ -102,3 +117,45 @@ npx eslint 'src/**/*.ts'
 
 The existing end-to-end test still targets the starter route and response.
 It needs updating before it can validate the current application.
+
+## Entity codes
+
+Code columns are unique varchar values. Before saving a new entity, use
+`generateCode` from `src/helpers` with the appropriate sequence and prefix:
+
+```ts
+const userCode = await generateCode(this.dataSource, 'user_code_seq', 'USR');
+```
+
+The available sequences are `role_code_seq`, `user_code_seq`,
+`booking_code_seq` and `transaction_code_seq`. Suggested prefixes are `ROL`,
+`USR`, `BKG` and `TXN`. Values start at `0001` and continue beyond four digits.
+PostgreSQL sequences are safe for concurrent requests; rolled-back operations
+can leave gaps. Codes are assigned by the caller, not by an entity hook.
+
+Entity properties use camelCase, with explicit snake_case database column names.
+The inherited `createdAt` and `updatedAt` column names follow the existing base
+entity. Monetary values use `numeric(12,2)` and are represented as strings in
+TypeScript. Password and token columns are excluded from normal selects;
+authentication queries can explicitly select them when needed.
+
+### API test sample data
+
+`npm run seed` creates 4 roles, 75 users (including the initial admin),
+50 bookings and 60 transactions. It runs roles, admin, sample users, bookings,
+then transactions. The original five bookings and six transactions are retained
+and reused when expanding a previously seeded database.
+
+Additional users have emails `seed.user001@adminhub.com` through
+`seed.user074@adminhub.com` and password `User@123` (bcrypt hashed). They cover
+ADMIN, VIEWER and EDITOR roles, varied profile details and all user statuses.
+The admin credentials remain `admin@adminhub.com` / `Admin@123`.
+
+Bookings and transactions cover every status, varied amounts, multiple users,
+and payment/refund pairs in INR. Additional records use dates relative to the
+first seed run, with past completed/cancelled bookings and upcoming bookings.
+No payment gateway requests are made.
+
+Stable emails and seed markers identify existing samples so reruns skip them
+without replacing edited data. Existing non-seed records are preserved, so total
+database counts can be higher than these seed counts.

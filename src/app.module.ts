@@ -8,6 +8,11 @@ import appConfig, { dbConfig, validate } from './configs';
 import { LoggerMiddleware } from './middlewares';
 import { AllExceptionsFilter, ResponseInterceptor } from './common';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { Role } from './modules/roles/entities/role.entity';
+import { User } from './modules/users/entities/user.entity';
+import { AppToken } from './modules/auth/entities/appToken.entity';
+import { Booking } from './modules/bookings/entities/booking.entity';
+import { Transaction } from './modules/transactions/entities/transactions.entity';
 
 @Module({
   imports: [
@@ -30,6 +35,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
       useFactory: (configService: ConfigService) =>
         configService.get('database')!,
     }),
+    TypeOrmModule.forFeature([Role, User, AppToken, Booking, Transaction]),
   ],
   controllers: [AppController],
   providers: [

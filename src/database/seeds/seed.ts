@@ -4,6 +4,8 @@ import { seedSuperAdmin, seedUsers } from './user.seed';
 import { seedBookings } from './booking.seed';
 import { seedTransactions } from './transaction.seed';
 
+import { seedLogs } from './log.seed';
+
 async function runSeed(): Promise<void> {
   const dataSource = await dataSourcePromise;
 
@@ -14,6 +16,7 @@ async function runSeed(): Promise<void> {
     await seedUsers(dataSource);
     await seedBookings(dataSource);
     await seedTransactions(dataSource);
+    await seedLogs(dataSource);
   } finally {
     if (dataSource.isInitialized) {
       await dataSource.destroy();

@@ -1,3 +1,4 @@
+import { TransactionProcessingLog } from './entities/transaction-processing-log.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Transaction } from './entities/transactions.entity';
@@ -8,7 +9,7 @@ import { TransactionsController } from './transactions.controller';
 import { AuthGuard } from '../../common/guards';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Transaction])],
+  imports: [TypeOrmModule.forFeature([Transaction, TransactionProcessingLog])],
   controllers: [TransactionsController],
   providers: [TransactionsRepository, TransactionsService, AuthGuard],
   exports: [TransactionsService],

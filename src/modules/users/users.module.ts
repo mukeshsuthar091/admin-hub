@@ -1,3 +1,4 @@
+import { UserActivityLog } from './entities/user-activity-log.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TransactionsModule } from '../transactions/transactions.module';
@@ -12,7 +13,7 @@ import { AuthGuard } from '../../common/guards';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, UserActivityLog]),
     TransactionsModule,
     BookingsModule,
     RolesModule,

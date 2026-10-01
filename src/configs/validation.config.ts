@@ -161,6 +161,11 @@ export class EnvironmentVariables {
   @Min(4)
   @Max(31)
   SALT_ROUNDS: number = 10;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  APP_TIMEZONE: string = 'UTC';
 }
 
 /**

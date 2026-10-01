@@ -6,9 +6,12 @@ export interface ErrorResponseBody {
   path: string;
 }
 
-export interface SuccessResponse<T> {
+export interface MessageResponse {
   statusCode: number;
   message: string;
+}
+
+export interface SuccessResponse<T> extends MessageResponse {
   data: T;
 }
 

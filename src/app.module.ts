@@ -9,10 +9,8 @@ import { LoggerMiddleware } from './middlewares';
 import { AllExceptionsFilter, AuthGuard, ResponseInterceptor } from './common';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { Role } from './modules/roles/entities/role.entity';
-import { User } from './modules/users/entities/user.entity';
+import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { Booking } from './modules/bookings/entities/booking.entity';
-import { Transaction } from './modules/transactions/entities/transactions.entity';
 
 @Module({
   imports: [
@@ -35,8 +33,9 @@ import { Transaction } from './modules/transactions/entities/transactions.entity
       useFactory: (configService: ConfigService) =>
         configService.get('database')!,
     }),
-    TypeOrmModule.forFeature([Role, User, Booking, Transaction]),
+    TypeOrmModule.forFeature([Role]),
     AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [

@@ -6,7 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import appConfig, { dbConfig, validate } from './configs';
 import { LoggerMiddleware } from './middlewares';
-import { AllExceptionsFilter, ResponseInterceptor } from './common';
+import { AllExceptionsFilter, AuthGuard, ResponseInterceptor } from './common';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { Role } from './modules/roles/entities/role.entity';
 import { User } from './modules/users/entities/user.entity';
@@ -40,6 +40,7 @@ import { Transaction } from './modules/transactions/entities/transactions.entity
   controllers: [AppController],
   providers: [
     AppService,
+    AuthGuard,
     ConfigService,
     {
       provide: APP_GUARD,

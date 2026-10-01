@@ -1,98 +1,104 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# AdminHub API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS and PostgreSQL backend for the AdminHub assignment, using TypeORM.
+The current project contains the shared application setup. Authentication,
+dashboard, users, transactions and bookings are still to be implemented.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Local setup
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+Use Node.js 20 or newer and a running PostgreSQL server.
 
 ```bash
-$ npm install
+npm ci
+cp .env.example .env
 ```
 
-## Compile and run the project
+Create the PostgreSQL database and update `.env` with your connection details.
+Replace both JWT secret placeholders with separate random secrets.
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run migration:run
+npm run start:dev
 ```
 
-## Run tests
+The default port is `8000`. The current endpoint is `GET /api/health`.
+Swagger is available at `http://localhost:8000/api/docs`.
+The health endpoint currently returns a wrapped starter message; it does not
+check database readiness.
+
+## Environment variables
+
+| Variable                                        | Purpose / default                                                                   |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `NODE_ENV`                                      | `local`, `development`, `test` or `production`; default `local`                     |
+| `PORT`                                          | HTTP port; default `8000`                                                           |
+| `FRONTEND_URL`                                  | Allowed frontend origin, such as `http://localhost:3000`; no trailing slash or path |
+| `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`  | PostgreSQL connection details; required                                             |
+| `DB_PORT`                                       | PostgreSQL port; default `5432`                                                     |
+| `DB_SSL`                                        | `true` or `false`; default `false`                                                  |
+| `DB_SSL_CA`                                     | Optional PEM CA certificate for SSL, with literal `\n` supported                    |
+| `DB_POOL_MAX`, `DB_POOL_MIN`                    | Pool limits; defaults `20` and `2`; minimum cannot exceed maximum                   |
+| `DB_POOL_IDLE_TIMEOUT`                          | Idle timeout in milliseconds; default `30000`                                       |
+| `DB_POOL_CONN_TIMEOUT`                          | Connection timeout in milliseconds; default `2000`                                  |
+| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`       | Required JWT secrets; authentication implementation is pending                      |
+| `ACCESS_TOKEN_EXPIRES`, `REFRESH_TOKEN_EXPIRES` | Positive duration with unit `ms`, `s`, `m`, `h`, `d`, `w` or `y`                    |
+| `SALT_ROUNDS`                                   | bcrypt cost between `4` and `31`; default `10`                                      |
+
+SSL verifies the database certificate. When the provider uses a private CA,
+provide `DB_SSL_CA` rather than disabling certificate verification.
+Do not commit `.env` or real credentials.
+
+## Database migrations
+
+Schema synchronization is disabled in every environment. Put entities in files
+named `*.entity.ts` and register them through `TypeOrmModule.forFeature()` in their
+feature modules. The CLI discovers these files using `src/database/data-source.ts`.
+
+After changing entities, generate and review a migration:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run migration:generate -- src/database/migrations/CreateUsers
+npm run migration:show
+npm run migration:run
 ```
 
-## Deployment
+The generate command needs a database connection to compare the schema.
+There are no entities or schema migrations yet, so generation is useful once
+feature entities have been added.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+To undo the last applied migration:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run migration:revert
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+For a compiled deployment, run migrations before starting the application:
 
-## Resources
+```bash
+npm run build
+node node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js
+npm run start:prod
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+A seed script, realistic sample data, admin credentials and a schema diagram
+will be added with the feature modules.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Shared setup
 
-## Support
+- Helmet, environment-based CORS and global rate limiting (100 requests/minute).
+- JSON and URL-encoded request bodies limited to 1 MB.
+- Global DTO validation that transforms inputs and rejects unknown properties.
+- Consistent success responses, including top-level `data` and `meta` for pagination.
+- Consistent errors; server errors return a generic message and log details internally.
+- HTTP request logging and shutdown hooks.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Checks
 
-## Stay in touch
+```bash
+npm run build
+npm test -- --runInBand
+npx eslint 'src/**/*.ts'
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+The existing end-to-end test still targets the starter route and response.
+It needs updating before it can validate the current application.

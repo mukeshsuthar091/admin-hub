@@ -22,7 +22,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
+    const status: number =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
@@ -30,19 +30,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let message: string | string[] = 'Internal server error';
     let errorName = 'Internal Server Error';
 
-    if (exception instanceof HttpException) {
+    if (exception instanceof HttpException && status < 500) {
       const res = exception.getResponse();
       if (typeof res === 'object' && res !== null) {
-        const resObj = res as Record<string, any>;
-        message = resObj.message ?? exception.message;
-        errorName = resObj.error ?? exception.name;
+        const resObj = res as Record<string, unknown>;
+        if (typeof resObj.message === 'string') {
+          message = resObj.message;
+        } else if (
+          Array.isArray(resObj.message) &&
+          resObj.message.every((item: unknown) => typeof item === 'string')
+        ) {
+          message = resObj.message;
+        } else {
+          message = exception.message;
+        }
+        errorName =
+          typeof resObj.error === 'string' ? resObj.error : exception.name;
       } else if (typeof res === 'string') {
         message = res;
         errorName = exception.name;
       }
-    } else if (exception instanceof Error) {
-      message = exception.message;
-      errorName = exception.name;
     }
 
     const errorResponseBody: ErrorResponseBody = {
@@ -53,10 +60,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       path: request.url,
     };
 
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (status >= 500) {
       this.logger.error(
         `[${request.method}] ${request.url} - ${status} - Error: ${
-          exception instanceof Error ? exception.stack : JSON.stringify(exception)
+          exception instanceof Error
+            ? exception.stack
+            : JSON.stringify(exception)
         }`,
       );
     } else {

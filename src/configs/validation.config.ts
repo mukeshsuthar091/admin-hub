@@ -2,14 +2,18 @@ import { ClassConstructor, plainToInstance, Type } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
-  IsNumber,
+  IsInt,
+  IsIn,
+  IsUrl,
+  Matches,
+  Min,
+  Max,
   IsOptional,
   IsString,
   validateSync,
   ValidatorOptions,
 } from 'class-validator';
 import { Environment } from '../common';
-
 
 /**
  * Generic reusable validation function for any class-validator schema.
@@ -57,8 +61,10 @@ export class EnvironmentVariables {
   NODE_ENV: Environment = Environment.Local;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @IsOptional()
+  @Min(1)
+  @Max(65535)
   PORT: number = 8000;
 
   @IsString()
@@ -78,19 +84,40 @@ export class EnvironmentVariables {
   DB_HOST: string;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
+  @Min(1)
+  @Max(65535)
   DB_PORT: number = 5432;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @IsOptional()
+  @Min(1)
   DB_POOL_MAX: number = 20;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @IsOptional()
+  @Min(0)
   DB_POOL_MIN: number = 2;
 
+  @IsIn(['true', 'false'])
+  DB_SSL: string = 'false';
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  DB_SSL_CA: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  DB_POOL_IDLE_TIMEOUT: number = 30000;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  DB_POOL_CONN_TIMEOUT: number = 2000;
 
   @IsString()
   @IsNotEmpty()
@@ -102,26 +129,53 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[1-9]\d*(ms|s|m|h|d|w|y)$/, {
+    message:
+      'ACCESS_TOKEN_EXPIRES must be a positive duration such as 15m or 7d',
+  })
   ACCESS_TOKEN_EXPIRES: string;
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[1-9]\d*(ms|s|m|h|d|w|y)$/, {
+    message:
+      'REFRESH_TOKEN_EXPIRES must be a positive duration such as 15m or 7d',
+  })
   REFRESH_TOKEN_EXPIRES: string;
 
   @IsString()
   @IsNotEmpty()
+  @IsUrl({
+    require_tld: false,
+    protocols: ['http', 'https'],
+    require_protocol: true,
+  })
+  @Matches(/^https?:\/\/[^/?#]+$/, {
+    message:
+      'FRONTEND_URL must be an HTTP origin without a path, query or fragment',
+  })
   FRONTEND_URL: string;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
+  @Min(4)
+  @Max(31)
   SALT_ROUNDS: number = 10;
 }
 
 /**
  * Standard validate function for NestJS ConfigModule.forRoot({ validate })
  */
-export function validate(config: Record<string, unknown>): EnvironmentVariables {
-  return validateConfig(EnvironmentVariables, config);
+export function validate(
+  config: Record<string, unknown>,
+): EnvironmentVariables {
+  const validated = validateConfig(EnvironmentVariables, config);
+  if (validated.DB_POOL_MIN > validated.DB_POOL_MAX) {
+    throw new Error(
+      '[Config Validation Error] DB_POOL_MIN must not exceed DB_POOL_MAX',
+    );
+  }
+  return validated;
 }
 
 export const configValidationSchema = validate;

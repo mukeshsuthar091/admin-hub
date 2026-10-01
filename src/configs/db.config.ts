@@ -1,33 +1,35 @@
 import { registerAs } from '@nestjs/config';
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { DataSourceOptions } from 'typeorm';
 
-export default registerAs(
-  'database',
-  (): TypeOrmModuleOptions => ({
+export function getDatabaseOptions(): DataSourceOptions {
+  return {
     type: 'postgres',
     host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432', 10),
+    port: Number(process.env.DB_PORT || 5432),
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    autoLoadEntities: true,
-    synchronize:
-      process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local',
-    logging:
-      process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local',
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    synchronize: false,
+    logging: ['development', 'local'].includes(process.env.NODE_ENV || 'local'),
+    ssl:
+      process.env.DB_SSL === 'true'
+        ? {
+            rejectUnauthorized: true,
+            ...(process.env.DB_SSL_CA
+              ? { ca: process.env.DB_SSL_CA.replace(/\\n/g, '\n') }
+              : {}),
+          }
+        : false,
     extra: {
-      // Connection Pool Configuration
-      max: parseInt(process.env.DB_POOL_MAX || '20', 10),
-      min: parseInt(process.env.DB_POOL_MIN || '2', 10),
-      idleTimeoutMillis: parseInt(
-        process.env.DB_POOL_IDLE_TIMEOUT || '30000',
-        10,
-      ),
-      connectionTimeoutMillis: parseInt(
-        process.env.DB_POOL_CONN_TIMEOUT || '2000',
-        10,
-      ),
+      max: Number(process.env.DB_POOL_MAX || 20),
+      min: Number(process.env.DB_POOL_MIN ?? 2),
+      idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_TIMEOUT || 30000),
+      connectionTimeoutMillis: Number(process.env.DB_POOL_CONN_TIMEOUT || 2000),
     },
-  }),
-);
+  };
+}
+
+export default registerAs('database', () => ({
+  ...getDatabaseOptions(),
+  autoLoadEntities: true,
+}));

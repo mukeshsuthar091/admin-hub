@@ -6,12 +6,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Observable, map } from 'rxjs';
-import {
-  PaginatedData,
-  PaginatedResponse,
-  PaginationMeta,
-  SuccessResponse,
-} from '../types';
+import { PaginatedData, PaginatedResponse, SuccessResponse } from '../types';
 
 type ResponseData<T> = PaginatedData<T> | T;
 
@@ -48,16 +43,15 @@ function isPaginatedData<T>(value: unknown): value is PaginatedData<T> {
  * payloads.
  */
 @Injectable()
-export class ResponseInterceptor<T>
-  implements NestInterceptor<ResponseData<T>, SuccessResponse<T> | PaginatedResponse<T>>
-{
+export class ResponseInterceptor<T> implements NestInterceptor<
+  ResponseData<T>,
+  SuccessResponse<T> | PaginatedResponse<T>
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler<ResponseData<T>>,
   ): Observable<SuccessResponse<T> | PaginatedResponse<T>> {
-    const httpResponse = context
-      .switchToHttp()
-      .getResponse<Response>();
+    const httpResponse = context.switchToHttp().getResponse<Response>();
 
     return next.handle().pipe(
       map((data) => {
@@ -69,7 +63,7 @@ export class ResponseInterceptor<T>
             statusCode,
             message: 'Success',
             data: data.data,
-            meta: data.meta as PaginationMeta,
+            meta: data.meta,
           };
           return paginated;
         }
@@ -78,7 +72,7 @@ export class ResponseInterceptor<T>
         const standard: SuccessResponse<T> = {
           statusCode,
           message: 'Success',
-          data: data as T,
+          data: data,
         };
         return standard;
       }),

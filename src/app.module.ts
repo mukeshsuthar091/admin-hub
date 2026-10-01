@@ -12,6 +12,8 @@ import { Role } from './modules/roles/entities/role.entity';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -36,6 +38,7 @@ import { AuthModule } from './modules/auth/auth.module';
     TypeOrmModule.forFeature([Role]),
     AuthModule,
     UsersModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [

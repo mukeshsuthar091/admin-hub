@@ -9,8 +9,8 @@ export class RecentTransactionDto {
   transactionCode: string;
   @ApiProperty({ example: '1500.00' })
   totalAmount: string;
-  @ApiProperty({ example: 'INR' })
-  currency: string;
+  @ApiProperty({ example: 'INR', nullable: true, type: String })
+  currency: string | null;
   @ApiProperty({ enum: TransactionStatus })
   status: TransactionStatus;
   @ApiProperty({ type: String, format: 'date-time' })

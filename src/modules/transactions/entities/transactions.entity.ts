@@ -64,8 +64,8 @@ export class Transaction extends CustomBaseEntity {
   @Column({ name: 'total_amount', type: 'numeric', precision: 12, scale: 2 })
   totalAmount: string;
 
-  @Column({ type: 'varchar', length: 3 })
-  currency: string;
+  @Column({ type: 'varchar', length: 3, nullable: true })
+  currency: string | null;
 
   @Column({
     name: 'payment_gateway',

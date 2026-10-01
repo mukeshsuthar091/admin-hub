@@ -42,8 +42,8 @@ export class Booking extends CustomBaseEntity {
   @Column({ name: 'duration_minutes', type: 'integer' })
   durationMinutes: number;
 
-  @Column({ type: 'text' })
-  location: string;
+  @Column({ type: 'text', nullable: true })
+  location: string | null;
 
   @Column({ name: 'special_notes', type: 'text', nullable: true })
   specialNotes: string | null;

@@ -1,79 +1,67 @@
-# AdminHub API
+# AdminHub Backend
 
-NestJS and PostgreSQL backend for the AdminHub assignment, using TypeORM.
-The current project contains the shared application setup. Authentication,
-dashboard, users, transactions and bookings are still to be implemented.
+Backend for the AdminHub dashboard, built with NestJS, TypeORM and PostgreSQL. It covers authentication, users, bookings, transactions, refunds, dashboard statistics and revenue charts. Detail endpoints also return activity, processing and lifecycle logs.
 
-## Local setup
+Repository: [mukeshsuthar091/admin-hub](https://github.com/mukeshsuthar091/admin-hub).
 
-Use Node.js 20 or newer and a running PostgreSQL server.
+## Setup
+
+The project was checked with Node.js **20.19.5** and npm **10.8.2**. You also need a running PostgreSQL instance and permission to create the `uuid-ossp` extension.
 
 ```bash
+git clone https://github.com/mukeshsuthar091/admin-hub.git
+cd admin-hub
 npm ci
 cp .env.example .env
 ```
 
-Create the PostgreSQL database and update `.env` with your connection details.
-Replace both JWT secret placeholders with separate random secrets.
+Create an empty database named `admin_hub`, or choose another name in `.env`. Set your PostgreSQL connection details, frontend origin and two separate JWT secrets before continuing.
 
 ```bash
 npm run migration:run
+npm run seed
 npm run start:dev
 ```
 
-The default port is `8000`. The current endpoint is `GET /api/health`.
-Swagger is available at `http://localhost:8000/api/docs`.
-The health endpoint currently returns a wrapped starter message; it does not
-check database readiness.
+Run migrations before seeding or starting the application. The default API URL is `http://localhost:8000/api`.
 
 ## Environment variables
 
-| Variable                                        | Purpose / default                                                                   |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `NODE_ENV`                                      | `local`, `development`, `test` or `production`; default `local`                     |
-| `PORT`                                          | HTTP port; default `8000`                                                           |
-| `FRONTEND_URL`                                  | Allowed frontend origin, such as `http://localhost:3000`; no trailing slash or path |
-| `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`  | PostgreSQL connection details; required                                             |
-| `DB_PORT`                                       | PostgreSQL port; default `5432`                                                     |
-| `DB_SSL`                                        | `true` or `false`; default `false`                                                  |
-| `DB_SSL_CA`                                     | Optional PEM CA certificate for SSL, with literal `\n` supported                    |
-| `DB_POOL_MAX`, `DB_POOL_MIN`                    | Pool limits; defaults `20` and `2`; minimum cannot exceed maximum                   |
-| `DB_POOL_IDLE_TIMEOUT`                          | Idle timeout in milliseconds; default `30000`                                       |
-| `DB_POOL_CONN_TIMEOUT`                          | Connection timeout in milliseconds; default `2000`                                  |
-| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`       | Required JWT secrets; authentication implementation is pending                      |
-| `ACCESS_TOKEN_EXPIRES`, `REFRESH_TOKEN_EXPIRES` | Positive duration with unit `ms`, `s`, `m`, `h`, `d`, `w` or `y`                    |
-| `SALT_ROUNDS`                                   | bcrypt cost between `4` and `31`; default `10`                                      |
+Copy `.env.example` rather than creating the file from scratch.
 
-SSL verifies the database certificate. When the provider uses a private CA,
-provide `DB_SSL_CA` rather than disabling certificate verification.
-Do not commit `.env` or real credentials.
+| Variable | Description | Default |
+| --- | --- | --- |
+| `NODE_ENV` | `local`, `development`, `test` or `production` | `local` |
+| `PORT` | HTTP port | `8000` |
+| `FRONTEND_URL` | Allowed frontend origin, without a trailing slash or path | Required |
+| `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | PostgreSQL connection details | Required |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_SSL` | Enable verified database SSL with `true` | `false` |
+| `DB_SSL_CA` | Optional PEM CA certificate; literal `\n` is supported | Unset |
+| `DB_POOL_MAX`, `DB_POOL_MIN` | Connection pool limits; minimum must not exceed maximum | `20`, `2` |
+| `DB_POOL_IDLE_TIMEOUT` | Idle timeout in milliseconds | `30000` |
+| `DB_POOL_CONN_TIMEOUT` | Connection timeout in milliseconds | `2000` |
+| `JWT_ACCESS_SECRET` | Access-token signing secret | Required |
+| `JWT_REFRESH_SECRET` | Separate refresh-token signing secret | Required |
+| `ACCESS_TOKEN_EXPIRES` | Positive duration, such as `15m` | Required; example `15m` |
+| `REFRESH_TOKEN_EXPIRES` | Positive duration, such as `7d` | Required; example `7d` |
+| `SALT_ROUNDS` | bcrypt cost, from 4 to 31 | `10` |
+| `APP_TIMEZONE` | Timezone for calendar statistics and charts | `UTC` |
 
-## Database migrations
+Use `Asia/Kolkata` for Indian calendar boundaries if needed. Keep `.env` and real credentials out of the repository. SSL uses certificate verification; provide the CA when your database provider requires one.
 
-Schema synchronization is disabled in every environment. Put entities in files
-named `*.entity.ts` and register them through `TypeOrmModule.forFeature()` in their
-feature modules. The CLI discovers these files using `src/database/data-source.ts`.
-
-After changing entities, generate and review a migration:
+## Running the application
 
 ```bash
-npm run migration:generate -- src/database/migrations/CreateUsers
-npm run migration:show
-npm run migration:run
+# Development with reload
+npm run start:dev
+
+# Build and run the compiled application
+npm run build
+npm run start:prod
 ```
 
-The generate command needs a database connection to compare the schema.
-The initial migration creates roles, users, app tokens, bookings and transactions,
-including their enum types, indexes, constraints and code sequences. Run it with
-`npm run migration:run`. Generate a new migration for later entity changes.
-
-To undo the last applied migration:
-
-```bash
-npm run migration:revert
-```
-
-For a compiled deployment, run migrations before starting the application:
+For a deployment using compiled files, apply migrations before starting:
 
 ```bash
 npm run build
@@ -81,33 +69,83 @@ node node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js
 npm run start:prod
 ```
 
-## Seed initial roles and admin
+The build must include the compiled migration files. Keep development seed data out of a production database.
 
-After applying migrations, run:
+## Migrations
+
+TypeORM schema synchronization is disabled. The migrations create the tables, enum types, indexes, constraints and code sequences.
+
+```bash
+npm run migration:show
+npm run migration:run
+```
+
+After changing an entity, generate a new migration against your development database and review its SQL:
+
+```bash
+npm run migration:generate -- src/database/migrations/DescribeTheChange
+```
+
+To revert the last applied migration:
+
+```bash
+npm run migration:revert
+```
+
+Reverting a table-creation migration removes its data. The refund migration cannot restore the original positive-only amount constraint while negative refund records remain. Use a disposable development database for rollback checks.
+
+## Seed data and test credentials
 
 ```bash
 npm run seed
 ```
 
-The seed creates `SUPER_ADMIN`, `ADMIN`, `VIEWER` and `EDITOR` roles first,
-then creates one super admin: `admin@adminhub.com` / `Admin@123`.
-The password is hashed with bcrypt using `SALT_ROUNDS` before saving.
-Existing roles are checked by name, and an existing admin email is skipped
-without changing its password or role. Role and user codes use the existing
-PostgreSQL sequence helper. You can rerun the command after a partial failure.
+Seeds run in this order: roles → super admin → sample users → bookings → transactions → alerts and logs.
 
-Realistic dashboard data and a schema diagram are still to be added.
+| Account | Email | Password | Role |
+| --- | --- | --- | --- |
+| Initial admin | `admin@adminhub.com` | `Admin@123` | `SUPER_ADMIN` |
+| Sample users | `seed.user001@adminhub.com` through `seed.user074@adminhub.com` | `User@123` | Varies |
 
-## Shared setup
+The seed creates 4 roles, 75 users including the admin, 50 bookings and 60 transactions, plus sample alerts and logs. Some sample users are inactive or suspended and cannot log in. Passwords are bcrypt hashes in the database.
 
-- Helmet, environment-based CORS and global rate limiting (100 requests/minute).
-- JSON and URL-encoded request bodies limited to 1 MB.
-- Global DTO validation that transforms inputs and rejects unknown properties.
-- Consistent success responses, including top-level `data` and `meta` for pagination.
-- Consistent errors; server errors return a generic message and log details internally.
-- HTTP request logging and shutdown hooks.
+Seeds can be rerun without duplicating their sample records. Existing records are preserved, so counts may be higher on a database that already contains data. An existing admin email is skipped: seeding does not reset its password or role.
 
-## Checks
+These credentials are for local testing. There are no external payment gateway requests during seeding.
+
+## API documentation
+
+| Deliverable | Location |
+| --- | --- |
+| Swagger UI | [http://localhost:8000/api/docs](http://localhost:8000/api/docs) |
+| Live OpenAPI JSON | [http://localhost:8000/api/docs-json](http://localhost:8000/api/docs-json) |
+| PostgreSQL schema and ER diagram | [docs/schema.md](docs/schema.md) |
+| Fresh-database SQL reference | [docs/schema.sql](docs/schema.sql) |
+
+URLs above require the local server to be running. No hosted backend URL is configured in this repository.
+
+In Swagger, call `POST /api/auth/login` with the test admin credentials. Copy `data.accessToken` into **Authorize**, then call a protected endpoint. Login returns `accessToken` and `refreshToken`; use `GET /api/auth/me` for the user profile.
+
+
+## Project structure
+
+```text
+src/
+  common/       guards, filters, interceptors, shared entities and types
+  configs/      application, database, environment and Swagger setup
+  database/     TypeORM DataSource, migrations and seeds
+  helpers/      JWT, password hashing, codes and pagination
+  modules/
+    auth/       login, current profile and token sessions
+    users/      user management and activity log retrieval
+    bookings/   booking management and lifecycle log retrieval
+    transactions/ transaction management, refunds and processing history
+    dashboard/  statistics, charts and alerts
+```
+
+Controllers handle HTTP inputs, services handle business rules, and repositories handle database queries. DTOs validate inputs and document responses. Success responses use `{statusCode, message, data}`; paginated responses include top-level `meta`. Operations with no data return `{statusCode, message}`.
+
+## Checks and current scope
 
 ```bash
 npm run build
@@ -115,47 +153,10 @@ npm test -- --runInBand
 npx eslint 'src/**/*.ts'
 ```
 
-The existing end-to-end test still targets the starter route and response.
-It needs updating before it can validate the current application.
+`npm run lint` also applies automatic fixes. The end-to-end test still targets the original starter endpoint and is not a full API test suite.
 
-## Entity codes
+JWT authentication checks the user's current database status and role. Creating users and bulk user changes additionally require ADMIN or SUPER_ADMIN. Other protected endpoints require an active authenticated account. The application includes Helmet, CORS, request limits, DTO validation and consistent error responses.
 
-Code columns are unique varchar values. Before saving a new entity, use
-`generateCode` from `src/helpers` with the appropriate sequence and prefix:
+Refunds are full **database ledger refunds**, not gateway refunds. Refresh tokens are issued, but a refresh/logout endpoint is not implemented. Logs and alerts currently have seed data and read endpoints; automatic event writers and live monitoring are not present in this checkout. The health endpoint returns a starter message and does not check database readiness.
 
-```ts
-const userCode = await generateCode(this.dataSource, 'user_code_seq', 'USR');
-```
-
-The available sequences are `role_code_seq`, `user_code_seq`,
-`booking_code_seq` and `transaction_code_seq`. Suggested prefixes are `ROL`,
-`USR`, `BKG` and `TXN`. Values start at `0001` and continue beyond four digits.
-PostgreSQL sequences are safe for concurrent requests; rolled-back operations
-can leave gaps. Codes are assigned by the caller, not by an entity hook.
-
-Entity properties use camelCase, with explicit snake_case database column names.
-The inherited `createdAt` and `updatedAt` column names follow the existing base
-entity. Monetary values use `numeric(12,2)` and are represented as strings in
-TypeScript. Password and token columns are excluded from normal selects;
-authentication queries can explicitly select them when needed.
-
-### API test sample data
-
-`npm run seed` creates 4 roles, 75 users (including the initial admin),
-50 bookings and 60 transactions. It runs roles, admin, sample users, bookings,
-then transactions. The original five bookings and six transactions are retained
-and reused when expanding a previously seeded database.
-
-Additional users have emails `seed.user001@adminhub.com` through
-`seed.user074@adminhub.com` and password `User@123` (bcrypt hashed). They cover
-ADMIN, VIEWER and EDITOR roles, varied profile details and all user statuses.
-The admin credentials remain `admin@adminhub.com` / `Admin@123`.
-
-Bookings and transactions cover every status, varied amounts, multiple users,
-and payment/refund pairs in INR. Additional records use dates relative to the
-first seed run, with past completed/cancelled bookings and upcoming bookings.
-No payment gateway requests are made.
-
-Stable emails and seed markers identify existing samples so reruns skip them
-without replacing edited data. Existing non-seed records are preserved, so total
-database counts can be higher than these seed counts.
+Dashboard revenue assumes successful payments minus successful refunds. Refunded original payments remain gross payments, and separate refund records are deducted once. Currency conversion is not implemented. Revenue charts use the application timezone: 7D is daily, 1M uses seven-day buckets in the current month, and 3M/6M/1Y use calendar months. Empty periods return zero. Monthly percentage changes compare current and previous calendar-month activity.
